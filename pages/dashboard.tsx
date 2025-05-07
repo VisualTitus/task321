@@ -17,7 +17,7 @@ export default function DashboardPage() {
 
   return (
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1>📊 Dashboard</h1>
+      <h1>📊 Dashboard nuevo</h1>
       {user ? (
         <>
           <p>Welcome, <strong>{user.email}</strong></p>
