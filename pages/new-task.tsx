@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
 
-// ⚠️ Reemplazá con tus claves reales o movelo a lib/supabase.js
-const supabase = createClient("https://quqfgjcuxkbgrjaofyec.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cWZnamN1eGtiZ3JqYW9meWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2MzA2NzEsImV4cCI6MjA2MjIwNjY3MX0.ZOWFNwTc8HUVKcCKg9iIvUzx6KJIWMKC_F5q4uoWVz8");
+const supabase = createClient("https://quqfgjcuxkbgrjaofyec.supabase.co", "eyJhbGciOiJI...");
 
 export default function NewTaskPage() {
   const [form, setForm] = useState({
@@ -24,13 +22,12 @@ export default function NewTaskPage() {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-  
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // ...
-  };
-  
-    // 1. Buscar cliente por email (si tiene)
+    setLoading(true);
+    setMessage("");
+
     let clientId = null;
 
     if (form.email) {
@@ -40,23 +37,13 @@ export default function NewTaskPage() {
         .eq("email", form.email)
         .maybeSingle();
 
-      if (existingClient) {
-        clientId = existingClient.id;
-      }
+      if (existingClient) clientId = existingClient.id;
     }
 
-    // 2. Si no existe cliente, lo creamos
     if (!clientId) {
       const { data: newClient, error: clientError } = await supabase
         .from("clients")
-        .insert([
-          {
-            email: form.email || null,
-            name: form.name,
-            phone: form.phone,
-            address: form.address,
-          },
-        ])
+        .insert([{ email: form.email || null, name: form.name, phone: form.phone, address: form.address }])
         .select()
         .single();
 
@@ -69,7 +56,6 @@ export default function NewTaskPage() {
       clientId = newClient.id;
     }
 
-    // 3. Crear la orden de trabajo
     const { error: taskError } = await supabase.from("task_request").insert([
       {
         client_id: clientId,
