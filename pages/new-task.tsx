@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
 
 // ⚠️ Reemplazá con tus claves reales o movelo a lib/supabase.js
-const supabase = createClient("https://YOUR_PROJECT.supabase.co", "YOUR_ANON_KEY");
+const supabase = createClient("https://quqfgjcuxkbgrjaofyec.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cWZnamN1eGtiZ3JqYW9meWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2MzA2NzEsImV4cCI6MjA2MjIwNjY3MX0.ZOWFNwTc8HUVKcCKg9iIvUzx6KJIWMKC_F5q4uoWVz8");
 
 export default function NewTaskPage() {
   const router = useRouter();
