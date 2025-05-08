@@ -18,7 +18,8 @@ export default function DashbPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
-        setUser({ email: data.user.email || "" });
+        setUser({ email: data.user.email ?? "" });
+
 
       }
     });
