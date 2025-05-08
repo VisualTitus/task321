@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function NewTaskPage() {
   const [form, setForm] = useState({
@@ -14,6 +15,7 @@ export default function NewTaskPage() {
     description: "",
     urgent: false,
   });
+
   const [message, setMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -28,19 +30,14 @@ export default function NewTaskPage() {
     e.preventDefault();
     setMessage("");
 
-    let clientId: number | null = null;
+    let clientId = null;
 
     if (form.email) {
-      const { data: existingClient, error: clientError } = await supabase
+      const { data: existingClient } = await supabase
         .from("clients")
         .select("id")
         .eq("email", form.email)
         .maybeSingle();
-
-      if (clientError) {
-        setMessage("❌ Error al verificar cliente existente");
-        return;
-      }
 
       if (existingClient) {
         clientId = existingClient.id;
@@ -48,30 +45,36 @@ export default function NewTaskPage() {
     }
 
     if (!clientId) {
-      const { data: newClient, error: newClientError } = await supabase
+      const { data: newClient, error: clientError } = await supabase
         .from("clients")
-        .insert([{ email: form.email || null, name: form.name, phone: form.phone, address: form.address }])
+        .insert([
+          {
+            email: form.email || null,
+            name: form.name,
+            phone: form.phone,
+            address: form.address,
+          },
+        ])
         .select()
         .single();
 
-      if (newClientError) {
+      if (clientError || !newClient) {
         setMessage("❌ Error al guardar cliente");
         return;
       }
 
-      clientId = newClient?.id ?? null;
+      clientId = newClient.id;
     }
 
-    if (!clientId) {
-      setMessage("❌ No se pudo obtener el ID del cliente");
-      return;
-    }
+    const { error } = await supabase.from("task_request").insert([
+      {
+        client_id: clientId,
+        description: form.description,
+        urgent: form.urgent,
+      },
+    ]);
 
-    const { error: taskError } = await supabase
-      .from("task_request")
-      .insert([{ client_id: clientId, description: form.description, urgent: form.urgent }]);
-
-    if (taskError) {
+    if (error) {
       setMessage("❌ Error al crear orden");
     } else {
       setMessage("✅ Orden creada correctamente");
@@ -90,7 +93,7 @@ export default function NewTaskPage() {
     <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
       <h1>📞 Nueva Orden</h1>
       <form onSubmit={handleSubmit}>
-        <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
+        <input name="email" value={form.email} onChange={handleChange} placeholder="Email (opcional)" />
         <input name="name" value={form.name} onChange={handleChange} placeholder="Nombre" required />
         <input name="phone" value={form.phone} onChange={handleChange} placeholder="Teléfono" />
         <input name="address" value={form.address} onChange={handleChange} placeholder="Dirección" />
