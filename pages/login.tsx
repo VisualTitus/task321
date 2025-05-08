@@ -1,32 +1,30 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-  async function handleLogin(e: React.FormEvent) {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+
+    const res = await fetch("http://localhost:3001/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
-    if (error) {
-      setError(error.message);
+    const data = await res.json();
+
+    if (res.ok) {
+      localStorage.setItem("token", data.token); // Guardamos el token
+      router.push("/dashb"); // Redirigimos a la página protegida
     } else {
-      router.push("/dashb");
+      setError(data.message || "Login failed");
     }
-  }
+  };
 
   return (
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
@@ -36,21 +34,21 @@ export default function LoginPage() {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ display: "block", marginBottom: "1rem" }}
+          onChange={(e) => setEmail(e.target.value)}
         />
+        <br />
         <input
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ display: "block", marginBottom: "1rem" }}
+          onChange={(e) => setPassword(e.target.value)}
         />
+        <br />
         <button type="submit">Login</button>
+        {error && <p style={{ color: "red" }}>{error}</p>}
       </form>
-      {error && <p style={{ color: "red" }}>❌ {error}</p>}
     </div>
   );
 }
