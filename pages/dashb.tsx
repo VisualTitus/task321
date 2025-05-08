@@ -7,8 +7,13 @@ const supabase = createClient(
 );
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
-
+  type User = {
+    email: string;
+    [key: string]: any;
+  };
+  
+  const [user, setUser] = useState<User | null>(null);
+  
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
