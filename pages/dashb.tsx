@@ -7,23 +7,18 @@ const supabase = createClient(
 );
 
 type User = {
-  email?: string; // ← ahora es opcional
-  [key: string]: unknown;
+  email: string;
 };
 
+const [user, setUser] = useState<User | null>(null);
 
-export default function DashbPage() {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUser({ email: data.user.email ?? "" });
-
-
-      }
-    });
-  }, []);
+useEffect(() => {
+  supabase.auth.getUser().then(({ data }) => {
+    if (data.user) {
+      setUser({ email: data.user.email ?? "" });
+    }
+  });
+}, []);
 
   return (
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
