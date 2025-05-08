@@ -7,9 +7,10 @@ const supabase = createClient(
 );
 
 type User = {
-  email: string;
+  email?: string; // ← ahora es opcional
   [key: string]: unknown;
 };
+
 
 export default function DashbPage() {
   const [user, setUser] = useState<User | null>(null);
