@@ -6,27 +6,27 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cWZnamN1eGtiZ3JqYW9meWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2MzA2NzEsImV4cCI6MjA2MjIwNjY3MX0.ZOWFNwTc8HUVKcCKg9iIvUzx6KJIWMKC_F5q4uoWVz8"
 );
 
-export default function DashboardPage() {
-  type User = {
-    email: string;
-    [key: string]: any;
-  };
-  
+type User = {
+  email: string;
+  [key: string]: unknown;
+};
+
+export default function DashbPage() {
   const [user, setUser] = useState<User | null>(null);
-  
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+      if (data.user) {
+        setUser({ email: data.user.email });
+      }
     });
   }, []);
 
   return (
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1>📊 Dashboard nuevo</h1>
+      <h1>📊 Dashboard (dashb)</h1>
       {user ? (
-        <>
-          <p>Welcome, <strong>{user.email}</strong></p>
-        </>
+        <p>Welcome, <strong>{user.email}</strong></p>
       ) : (
         <p>Loading user info...</p>
       )}
