@@ -53,7 +53,7 @@ export default function NewTaskPage() {
         data: existingClient,
         error: existingClientError,
       } = await supabase
-        .from<Client>("clients")
+        .from("clients")
         .select("id")
         .eq("email", form.email)
         .single();
@@ -70,7 +70,7 @@ export default function NewTaskPage() {
           data: newClient,
           error: insertError,
         } = await supabase
-          .from<Client>("clients")
+          .from("clients")
           .insert({
             name: form.name,
             email: form.email,
