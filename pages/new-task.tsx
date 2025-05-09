@@ -103,10 +103,17 @@ export default function NewTaskPage() {
         urgent: false,
       });
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error("Error creating task:", errorMsg);
-      setMessage(`❌ Error: ${errorMsg}`);
-    }    
+  console.error("Full error object:", err);
+  // If Supabase returns an object, stringify it:
+  const errorText =
+    err instanceof Error
+      ? err.message
+      : typeof err === "object"
+      ? JSON.stringify(err, null, 2)
+      : String(err);
+  setMessage(`❌ Error: ${errorText}`);
+}
+    
   };
 
   return (
