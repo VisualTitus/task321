@@ -105,10 +105,8 @@ export default function NewTaskPage() {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("Error creating task:", errorMsg);
-      setMessage("❌ There was an error creating the task.");
-    } finally {
-      setLoading(false);
-    }
+      setMessage(`❌ Error: ${errorMsg}`);
+    }    
   };
 
   return (
