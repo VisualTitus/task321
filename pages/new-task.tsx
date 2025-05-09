@@ -1,14 +1,25 @@
-import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useState, FormEvent, ChangeEvent } from "react";
+import { createClient, PostgrestError } from "@supabase/supabase-js";
 
-// Inicializar Supabase con variables de entorno
+// Initialize Supabase with environment variables
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+type Client = { id: number };
+
+type FormState = {
+  email: string;
+  name: string;
+  phone: string;
+  address: string;
+  description: string;
+  urgent: boolean;
+};
+
 export default function NewTaskPage() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     email: "",
     name: "",
     phone: "",
@@ -16,10 +27,12 @@ export default function NewTaskPage() {
     description: "",
     urgent: false,
   });
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
@@ -27,50 +40,60 @@ export default function NewTaskPage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      // Verificar si el cliente ya existe
-      const { data: existingClients, error: clientError } = await supabase
-        .from("clients")
-        .select("*")
+      // Check if client already exists by email
+      const {
+        data: existingClient,
+        error: existingClientError,
+      } = await supabase
+        .from<Client>("clients")
+        .select("id")
         .eq("email", form.email)
         .single();
 
-      let clientId;
+      if (existingClientError && !(existingClientError instanceof PostgrestError)) {
+        throw existingClientError;
+      }
 
-      if (existingClients) {
-        clientId = existingClients.id;
+      let clientId: number;
+      if (existingClient) {
+        clientId = existingClient.id;
       } else {
-        const { data: newClient, error: insertError } = await supabase
-          .from("clients")
+        const {
+          data: newClient,
+          error: insertError,
+        } = await supabase
+          .from<Client>("clients")
           .insert({
             name: form.name,
             email: form.email,
             phone: form.phone,
             address: form.address,
           })
-          .select()
+          .select("id")
           .single();
 
-        if (insertError || !newClient) throw insertError;
-        clientId = newClient.id;
+        if (insertError) throw insertError;
+        clientId = newClient!.id;
       }
 
-      // Insertar la nueva tarea
-      const { error: taskError } = await supabase.from("task_request").insert({
-        client_id: clientId,
-        description: form.description,
-        urgent: form.urgent,
-        status: "pending",
-      });
-
+      // Insert the new task request
+      const { error: taskError } = await supabase
+        .from("task_request")
+        .insert({
+          client_id: clientId,
+          description: form.description,
+          urgent: form.urgent,
+          status: "pending",
+        });
       if (taskError) throw taskError;
 
-      setMessage("✅ Tarea creada correctamente.");
+      setMessage("✅ Task created successfully.");
       setForm({
         email: "",
         name: "",
@@ -79,9 +102,10 @@ export default function NewTaskPage() {
         description: "",
         urgent: false,
       });
-    } catch (error: any) {
-      console.error("Error:", error.message || error);
-      setMessage("❌ Hubo un error al crear la tarea.");
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("Error creating task:", errorMsg);
+      setMessage("❌ There was an error creating the task.");
     } finally {
       setLoading(false);
     }
@@ -89,19 +113,60 @@ export default function NewTaskPage() {
 
   return (
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1>📞 Cargar nueva tarea</h1>
+      <h1>📞 Create New Task</h1>
       <form onSubmit={handleSubmit}>
-        <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required /><br />
-        <input name="name" placeholder="Nombre" value={form.name} onChange={handleChange} required /><br />
-        <input name="phone" placeholder="Teléfono" value={form.phone} onChange={handleChange} required /><br />
-        <input name="address" placeholder="Dirección" value={form.address} onChange={handleChange} required /><br />
-        <textarea name="description" placeholder="Descripción de la tarea" value={form.description} onChange={handleChange} required /><br />
+        <input
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <br />
+        <input
+          name="name"
+          placeholder="Name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+        <br />
+        <input
+          name="phone"
+          placeholder="Phone"
+          value={form.phone}
+          onChange={handleChange}
+          required
+        />
+        <br />
+        <input
+          name="address"
+          placeholder="Address"
+          value={form.address}
+          onChange={handleChange}
+          required
+        />
+        <br />
+        <textarea
+          name="description"
+          placeholder="Task Description"
+          value={form.description}
+          onChange={handleChange}
+          required
+        />
+        <br />
         <label>
-          <input type="checkbox" name="urgent" checked={form.urgent} onChange={handleChange} />
-          ¿Es urgente?
-        </label><br />
+          <input
+            type="checkbox"
+            name="urgent"
+            checked={form.urgent}
+            onChange={handleChange}
+          />
+          Urgent?
+        </label>
+        <br />
         <button type="submit" disabled={loading}>
-          {loading ? "Cargando..." : "Crear tarea"}
+          {loading ? "Submitting..." : "Create Task"}
         </button>
       </form>
       {message && <p>{message}</p>}
