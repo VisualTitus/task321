@@ -1,5 +1,5 @@
 import { useState, FormEvent, ChangeEvent } from "react";
-import { createClient, PostgrestError } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase with environment variables
 const supabase = createClient(
@@ -47,27 +47,20 @@ export default function NewTaskPage() {
 
     try {
       // Check if client already exists by email
-      const {
-        data: existingClient,
-        error: existingClientError,
-      } = await supabase
+      const { data: existingClient, error: existingClientError } = await supabase
         .from("clients")
         .select("id")
         .eq("email", form.email)
-        .single();
+        .maybeSingle();
 
-      if (existingClientError && !(existingClientError instanceof PostgrestError)) {
-        throw existingClientError;
-      }
+      if (existingClientError) throw existingClientError;
 
       let clientId: number;
       if (existingClient) {
         clientId = existingClient.id;
       } else {
-        const {
-          data: newClient,
-          error: insertError,
-        } = await supabase
+        // Insert new client
+        const { data: newClient, error: insertError } = await supabase
           .from("clients")
           .insert({
             name: form.name,
@@ -103,17 +96,15 @@ export default function NewTaskPage() {
         urgent: false,
       });
     } catch (err) {
-  console.error("Full error object:", err);
-  // If Supabase returns an object, stringify it:
-  const errorText =
-    err instanceof Error
-      ? err.message
-      : typeof err === "object"
-      ? JSON.stringify(err, null, 2)
-      : String(err);
-  setMessage(`❌ Error: ${errorText}`);
-}
-    
+      console.error("Error creating task:", err);
+      const errorMsg =
+        err && typeof err === "object" && "message" in err
+          ? JSON.stringify(err, null, 2)
+          : String(err);
+      setMessage(`❌ Error: ${errorMsg}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
