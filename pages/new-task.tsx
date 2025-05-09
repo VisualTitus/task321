@@ -33,8 +33,10 @@ export default function NewTaskPage() {
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
+    const target = e.currentTarget;
+    const { name, type, value } = target;
+    const checked = (target as HTMLInputElement).checked;
+    setForm(prev => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
