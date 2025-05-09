@@ -7,8 +7,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-type Client = { id: number };
-
 type FormState = {
   email: string;
   name: string;
