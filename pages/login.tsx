@@ -1,34 +1,35 @@
-import { useState } from "react";
-import { useRouter } from "next/router";
+// pages/login.tsx
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabase';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError]       = useState('');
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
-    const res = await fetch("http://localhost:3001/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    const data = await res.json();
-
-    if (res.ok) {
-      localStorage.setItem("token", data.token); // Guardamos el token
-      router.push("/dashb"); // Redirigimos a la página protegida
+    if (error) {
+      setError(error.message);
     } else {
-      setError(data.message || "Login failed");
+      // Guardamos el token de sesión
+      localStorage.setItem('sb_token', data.session?.access_token!);
+      router.push('/dashb');
     }
   };
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1>🔐 Login</h1>
+    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
+      <h1>🔐 Login Task321</h1>
       <form onSubmit={handleLogin}>
         <input
           type="email"
@@ -36,18 +37,16 @@ export default function LoginPage() {
           value={email}
           required
           onChange={(e) => setEmail(e.target.value)}
-        />
-        <br />
+        /><br/>
         <input
           type="password"
           placeholder="Password"
           value={password}
           required
           onChange={(e) => setPassword(e.target.value)}
-        />
-        <br />
+        /><br/>
         <button type="submit">Login</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
     </div>
   );
